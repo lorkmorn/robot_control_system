@@ -1,0 +1,19 @@
+<launch>
+    <rosparam file="$(find robot_control_system)/param/robotconfig.yaml" command="load" />
+    
+    <node name="controller" pkg="robot_control_system" type="controller" output="screen">
+    </node>
+
+    <node name="motion_model_simulation" pkg="robot_control_system" type="motion_model_simulation" output="screen">
+    </node>
+
+    <node name="drawer" pkg="robot_control_system" type="drawer" output="screen">
+    </node>
+
+    <!-- RVIZ to view the visualization -->
+        <node name="RVIZ" pkg="rviz" type="rviz" args=" -d $(find robot_control_system)/config/rviz/default.rviz" />
+
+</launch>
+                                                                                                                                                                                                                                                            
+
+

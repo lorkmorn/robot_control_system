@@ -1,0 +1,16 @@
+startpoint_x: 0.0
+startpoint_y: 1.0
+
+
+goalpoint_x: 7.0
+goalpoint_y: 8.0
+goalpose_yaw: -2.0  ####-3.14~3.14
+
+
+initpoint_x: -5.0
+initpoint_y: -5.0
+initpose_yaw: 4.0  ####-3.14~3.14
+
+maxacceleration: 2.0
+    
+
