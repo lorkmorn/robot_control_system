@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <tf/transform_datatypes.h>
+#include <std_msgs/Int8.h>
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/Pose.h>
 #include <nav_msgs/Odometry.h>
@@ -9,6 +10,7 @@
 Eigen::Matrix<double,1,5> xstate;  ///to store present state of robot  [x, y, yaw, vx, yawrate]
 Eigen::Matrix<double,1,2> v(2);    ///to store robot speed  [vx, yawrate], also for dwa_control computation
 Eigen::Matrix<double,1,3> goal;    ///goal position  [x, y]
+int Task_state=0;  
   
 void robotpose_callback(const nav_msgs::Odometry& odommsg)
 {
@@ -26,6 +28,9 @@ void robotpose_callback(const nav_msgs::Odometry& odommsg)
     xstate(4)=odommsg.twist.twist.angular.z; 
 }
 
+void taskstate_callback(std_msgs::Int8 task_state){
+    if(task_state.data==1) Task_state=1;
+}
 int main(int argc, char **argv)
 {
 
@@ -35,7 +40,7 @@ int main(int argc, char **argv)
     ///create publisher to publish robot velocity information, and Subscriber to subscribe odometry information 
     ros::Publisher robot_vel_pub = n.advertise<geometry_msgs::Twist>("/cmd_vel", 1000);
     ros::Subscriber robot_odom_sub = n.subscribe("/odom", 1000, robotpose_callback);
-    
+    ros::Subscriber task_state_sub = n.subscribe("/task_state",1,taskstate_callback);
     ///initialize robot position, goal position and maximum acceleration from parameter server
     double inityaw;
     geometry_msgs::Pose initpos;
@@ -73,12 +78,12 @@ int main(int argc, char **argv)
     {
         
         ///use present robot state and velocity information to compute next velocity information
-        double dist_to_goal;
-        if(results.traj==NULL) dist_to_goal=10;
-        else dist_to_goal=sqrt(pow(results.traj->xs(0)-goal(0),2)+pow(results.traj->xs(1)-goal(1),2));
+        ///double dist_to_goal;
+        ///if(results.traj==NULL) dist_to_goal=10;
+        ///else dist_to_goal=sqrt(pow(results.traj->xs(0)-goal(0),2)+pow(results.traj->xs(1)-goal(1),2));
 
-        if(dist_to_goal>=config.robot_radius) results=dwa_control_dist(xstate,v,goal,moconfig, obhead);
-        else results=dwa_control_yaw(xstate,v,goal,moconfig);
+        if(Task_state==0) results=dwa_control_dist(xstate,v,goal,moconfig, obhead);
+        else if(Task_state==1) results=dwa_control_yaw(xstate,v,goal,moconfig);
         
         v<<results.u(0),results.u(1);
         

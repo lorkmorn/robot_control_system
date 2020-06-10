@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <tf/transform_broadcaster.h>
+#include <std_msgs/Int8.h>
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/Quaternion.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -48,6 +49,7 @@ int main(int argc, char **argv)
     ros::Subscriber robot_vel_sub = n.subscribe("/cmd_vel", 1000, robotvel_callback);
     ros::Publisher robot_odom_pub = n.advertise<nav_msgs::Odometry>("/odom", 1000);  
     ros::Publisher path_pub = n.advertise<nav_msgs::Path>("trajectory",1, true);
+    ros::Publisher task_state_pub = n.advertise<std_msgs::Int8>("/task_state",1);
     
     ///create tf broadcaster to brodecast transform from /odom to /base_footprint
     tf::TransformBroadcaster odom_broadcaster;
@@ -87,7 +89,7 @@ int main(int argc, char **argv)
     path.header.stamp=current_time;
     path.header.frame_id="odom";
     
-    int goalreach=0;
+    std_msgs::Int8 task_state;
     
     ros::Rate loop_rate(10);
     while(n.ok()){
@@ -125,18 +127,21 @@ int main(int argc, char **argv)
         ///compute current position between goal and robot
         dist_to_goal = sqrt(pow((xstate[0] - goal[0]),2) + pow((xstate[1] - goal[1]),2));
         
-        if(goalreach==0 && dist_to_goal <= config.robot_radius*0.1){
+        if(task_state.data==0 && dist_to_goal <= config.robot_radius){
             ROS_INFO("Goal position is reached!!!");
-            goalreach=1;
+            task_state.data=1;
+            while(xstate(2)>M_PI) xstate(2)-=2*M_PI;
+            while(xstate(2)<-M_PI) xstate(2)+=2*M_PI;
             yaw_to_goal = goal[2]-xstate(2);
-            while(yaw_to_goal>M_PI) xstate(2)-=2*M_PI;
-            while(yaw_to_goal<-M_PI) xstate(2)+=2*M_PI;
-            
         }
-        if(goalreach==1 && (abs(yaw_to_goal)<=0.2 || abs(abs(yaw_to_goal)-2*M_PI)<0.2 )){
-            ROS_INFO("Goal yaw is reached!!!");
-            break;
+        if(task_state.data==1){
+            yaw_to_goal = goal[2]-xstate(2);
+            if(abs(yaw_to_goal)<=0.2){
+                ROS_INFO("Goal yaw is reached!!!");
+                break;
+            }
         }
+        task_state_pub.publish(task_state);
         ///else if goal is not reached, publish Odometry infomation
         odom.header.stamp = current_time;
         odom.header.frame_id = "/odom";
