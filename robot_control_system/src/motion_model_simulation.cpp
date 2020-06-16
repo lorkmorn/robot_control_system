@@ -16,7 +16,7 @@ Eigen::Matrix<double,1,5> traj; ////store robot state history
 Eigen::Matrix<double,1,3> goal;     ///goal position  [x, y]
 nav_msgs::Odometry odom;            ///Odometry infomation to publish
 nav_msgs::Path path;                ///path information to draw in rviz
-
+Config config;
 void robotvel_callback(const geometry_msgs::Twist& vel_msg)
 {
     ///recevie robot velocity information and store it
@@ -89,6 +89,7 @@ int main(int argc, char **argv)
     path.header.stamp=current_time;
     path.header.frame_id="odom";
     
+    ///for Publisher to advertise task_state
     std_msgs::Int8 task_state;
     
     ros::Rate loop_rate(10);
@@ -127,6 +128,7 @@ int main(int argc, char **argv)
         ///compute current position between goal and robot
         dist_to_goal = sqrt(pow((xstate[0] - goal[0]),2) + pow((xstate[1] - goal[1]),2));
         
+        ///if goal position is not reached
         if(task_state.data==0 && dist_to_goal <= config.robot_radius){
             ROS_INFO("Goal position is reached!!!");
             task_state.data=1;
@@ -134,13 +136,16 @@ int main(int argc, char **argv)
             while(xstate(2)<-M_PI) xstate(2)+=2*M_PI;
             yaw_to_goal = goal[2]-xstate(2);
         }
+        
+        ///if goal position is reached and goal yaw is not reached
         if(task_state.data==1){
             yaw_to_goal = goal[2]-xstate(2);
-            if(abs(yaw_to_goal)<=0.2){
+            if(abs(yaw_to_goal)<=0.05){
                 ROS_INFO("Goal yaw is reached!!!");
                 break;
             }
         }
+        
         task_state_pub.publish(task_state);
         ///else if goal is not reached, publish Odometry infomation
         odom.header.stamp = current_time;

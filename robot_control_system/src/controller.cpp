@@ -28,9 +28,11 @@ void robotpose_callback(const nav_msgs::Odometry& odommsg)
     xstate(4)=odommsg.twist.twist.angular.z; 
 }
 
+///for change task state from distance navigation to yaw navigation after robot reach goal position but yaw is not right
 void taskstate_callback(std_msgs::Int8 task_state){
     if(task_state.data==1) Task_state=1;
 }
+
 int main(int argc, char **argv)
 {
 
@@ -70,10 +72,16 @@ int main(int argc, char **argv)
     ///create struct to store [vx, yawrate] and trajectory of robot
     uandtraj results;
     results.traj=NULL;
+    
+    ///initialize Obstacle
     Obstacle* obhead=new Obstacle;
     obhead->ob<<4.030657,-0.5136;
-    ros::Rate loop_rate(10);
+    Obstacle* obtemp=new Obstacle;
+    obtemp->ob<<4,-1;
+    obhead->next=obtemp;
     
+    
+    ros::Rate loop_rate(10);
     while (ros::ok())
     {
         
@@ -96,6 +104,8 @@ int main(int argc, char **argv)
         ros::spinOnce();
         loop_rate.sleep();
     }
+    
+    delete obhead;
     return 0;
 }
 

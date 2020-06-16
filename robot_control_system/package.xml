@@ -31,8 +31,6 @@
   <build_depend>roscpp</build_depend>
   <build_depend>rospy</build_depend>
   <build_depend>tf</build_depend>
-  <build_depend>qtbase5-dev</build_depend>
-  <build_depend>qt5-qmake</build_depend>
   <build_depend>rosconsole</build_depend>
   <build_depend>roscpp_serialization</build_depend>
   <build_depend>roslib</build_depend>
@@ -46,8 +44,6 @@
   <run_depend>nav_msgs</run_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>tf</run_depend>
-  <run_depend>libqt5-core</run_depend>
-  <run_depend>libqt5-gui</run_depend>
   <run_depend>rosconsole</run_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>roscpp_serialization</run_depend>
