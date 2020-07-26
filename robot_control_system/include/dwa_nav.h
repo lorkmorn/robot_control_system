@@ -2,14 +2,14 @@
 #define DWA_NAV_H
 
 #include <eigen3/Eigen/Core>
-
 using namespace Eigen;
+
 class Config{
     public:
         double max_speed = 2.0;                     /// [m/s]
-        double min_speed = -1;                    /// [m/s]
-        double max_yawrate = 80.0 * M_PI / 180.0;   /// [rad/s]               
-        double max_dyawrate = 60.0 * M_PI / 180.0;  /// [rad/ss]
+        double min_speed = 0;                       /// [m/s]
+        double max_yawrate = 120.0 * M_PI / 180.0;   /// [rad/s]               
+        double max_dyawrate = 90.0 * M_PI / 180.0;  /// [rad/ss]
         double v_reso = 0.01;                       /// [m/s]
         double yawrate_reso = 0.1 * M_PI / 180.0;   /// [rad/s]
         double dt = 0.05;                    /// [s] Time tick for motion prediction
@@ -47,12 +47,12 @@ Trajectory* predict_trajectory(Matrix<double, 1, 5> xstate, double vx, double om
 
 double calc_to_goal_cost(Matrix<double, Eigen::Dynamic, 5> traj,Matrix<double,1,3> goal);
 double calc_to_goalyaw_cost(Matrix<double, Eigen::Dynamic, 5> traj,Matrix<double,1,3> goal);
-double calc_obstacle_cost(Trajectory* trajhead, Obstacle* obhead);
+double calc_obstacle_cost(Trajectory* trajhead, double obhead[10][2]);
 
-uandtraj calc_final_input(Matrix<double, 1, 5> xstate, Matrix<double,1,2> u,Matrix<double,1,4> dw,Matrix<double,1,3> goal, Obstacle* obhead);
+uandtraj calc_final_input(Matrix<double, 1, 5> xstate, Matrix<double,1,2> u,Matrix<double,1,4> dw,Matrix<double,1,3> goal, double obhead[10][2]);
 uandtraj calc_final_input_yaw(Matrix<double, 1, 5> xstate, Matrix<double,1,2> u,Matrix<double,1,4> dw,Matrix<double,1,3> goal);
 
-uandtraj dwa_control_dist(Matrix<double, 1, 5> x, Matrix<double,1,2> u, Matrix<double,1,3> goal, motion_config moconfig, Obstacle* obhead);
+uandtraj dwa_control_dist(Matrix<double, 1, 5> x, Matrix<double,1,2> u, Matrix<double,1,3> goal, motion_config moconfig, double obhead[10][2]);
 uandtraj dwa_control_yaw(Matrix<double, 1, 5> x, Matrix<double,1,2> u, Matrix<double,1,3> goal,motion_config moconfig);
 
 #endif 

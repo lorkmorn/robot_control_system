@@ -39,7 +39,7 @@ double calc_to_goal_cost(Matrix<double, Eigen::Dynamic, 5> traj,Matrix<double,1,
     double dy = goal[1]-traj(1);
     double error_dist = sqrt(pow(dx,2)+pow(dy,2));
     double error_angle = atan2(dy, dx);
-    double cost=abs(error_angle - traj(2))+error_dist;
+    double cost=abs(error_angle - traj(2))+pow(error_dist,2);
     return cost;
 }
 
@@ -71,48 +71,47 @@ Trajectory* predict_trajectory(Matrix<double, 1, 5> xstate, double vx, double om
     return head;
 }
 
-double calc_obstacle_cost(Trajectory* trajhead, Obstacle* obhead){
+double calc_obstacle_cost(Trajectory* trajhead, double obhead[10][2]){
     Config config;
-    int skip_n = 2; ///for speed up
+    int skip_n = 1; ///for speed up
     double minr = 9999;
     Trajectory* tempi=trajhead;
-    Obstacle* tempj=obhead;
     for(;(*tempi).next!=NULL;tempi=(*tempi).next){
-        for(;tempj!=NULL && (*tempj).next!=NULL;tempj=(*tempj).next){
-            double ox = (*tempj).ob[0];
-            double oy = (*tempj).ob[1];
+        for(int i=0;i<10;i++){
+            double ox = obhead[i][0];
+            double oy = obhead[i][1];
             double dx = (*tempi).xs[0] - ox;
             double dy = (*tempi).xs[1] - oy;
             double r = sqrt(pow(dx,2) + pow(dy,2));
-            if(r <= config.robot_radius*2) return 9999;  //// collision
-            if(minr >= r)minr = r;
+            if(r <= 0.5) return 9999;  //// collision
+            if(minr > r)minr = r;
         }
         for(int i=0;i<skip_n-1;i++) tempi=(*tempi).next;
     }
-    return 1.0/minr;
+    ///return 1.0/minr;
+    return 0;
 }
-    
 
-uandtraj calc_final_input(Matrix<double, 1, 5> xstate, Matrix<double,1,2> u,Matrix<double,1,4> dw,Matrix<double,1,3> goal, Obstacle* obhead){
+
+uandtraj calc_final_input(Matrix<double, 1, 5> xstate, Matrix<double,1,2> u,Matrix<double,1,4> dw,Matrix<double,1,3> goal, double obhead[10][2]){
     Config config;
     Matrix<double, 1, 5> x_init = xstate;
     float min_cost = 9999999;
     Matrix<double,1,2> best_u;
     best_u<<0.0, 0.0;
     Trajectory* best_traj;
-    ////best_traj<<x_init;
     for(double v=dw[0];v<dw[1];v+=config.v_reso){
         for(double y=dw[2];y<dw[3];y+=config.yawrate_reso){
             Trajectory* trajhead = predict_trajectory(x_init, v, y);////运动后期CPU速度跟不上，有点卡顿
-            Trajectory* trajlast=trajhead;
+            Trajectory* trajlast = trajhead;
             while((*trajlast).next!=NULL){trajlast=(*trajlast).next;}
             ///double to_goal_cost = config.to_goal_cost_gain * calc_to_goal_cost(traj, goal);
             double to_goal_cost = config.to_goal_cost_gain * calc_to_goal_cost((*trajlast).xs, goal);
             ///double speed_cost = config.speed_cost_gain * (config.max_speed - traj(traj.rows()-1, 3));
             double speed_cost = config.speed_cost_gain * (config.max_speed - (*trajlast).xs[3]);
-            double ob_cost = config.obstacle_cost_gain * calc_obstacle_cost(trajhead, obhead);
-            ///double ob_cost=0;
-            double final_cost = to_goal_cost + speed_cost ;
+            double ob_cost = calc_obstacle_cost(trajhead, obhead);
+            if(ob_cost==9999) continue;
+            double final_cost = to_goal_cost + speed_cost + ob_cost ;
 
             //// search minimum trajectory
             if(min_cost >= final_cost){
@@ -169,7 +168,8 @@ uandtraj calc_final_input_yaw(Matrix<double, 1, 5> xstate, Matrix<double,1,2> u,
     return results;
 }
 
-uandtraj dwa_control_dist(Matrix<double, 1, 5> x, Matrix<double,1,2> u, Matrix<double,1,3> goal, motion_config moconfig, Obstacle* obhead){
+uandtraj dwa_control_dist(Matrix<double, 1, 5> x, Matrix<double,1,2> u, Matrix<double,1,3> goal, motion_config moconfig, double obhead[10][2]){
+    
     Matrix<double,1,4> dw = calc_dynamic_window(x,moconfig);
     uandtraj results= calc_final_input(x, u, dw, goal, obhead);
     return results;

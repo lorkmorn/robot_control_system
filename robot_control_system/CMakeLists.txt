@@ -22,15 +22,14 @@ INCLUDE_DIRS include
 CATKIN_DEPENDS geometry_msgs std_msgs std_srvs
 )
 
-
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 
-add_executable(controller src/controller.cpp src/dwa_nav.cpp)
+add_executable(controller src/controller.cpp src/dwa_nav/dwa_nav.cpp)
 ##add_dependencies(controller ${nav_msgs_EXPORTED_TARGETS})
 target_link_libraries(controller ${catkin_LIBRARIES})
 
-add_executable(motion_model_simulation src/motion_model_simulation.cpp src/dwa_nav.cpp)
+add_executable(motion_model_simulation src/motion_model_simulation.cpp src/dwa_nav/dwa_nav.cpp)
 ##add_dependencies(controller ${nav_msgs_EXPORTED_TARGETS})
 target_link_libraries(motion_model_simulation ${catkin_LIBRARIES} yaml-cpp)
 

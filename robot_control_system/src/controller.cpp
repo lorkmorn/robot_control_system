@@ -73,24 +73,14 @@ int main(int argc, char **argv)
     uandtraj results;
     results.traj=NULL;
     
-    ///initialize Obstacle
-    Obstacle* obhead=new Obstacle;
-    obhead->ob<<4.030657,-0.5136;
-    Obstacle* obtemp=new Obstacle;
-    obtemp->ob<<4,-1;
-    obhead->next=obtemp;
-    
+    double obs[10][2]={4,-1,7,7,-3,-5,5,3,-3,-1};
     
     ros::Rate loop_rate(10);
     while (ros::ok())
     {
         
         ///use present robot state and velocity information to compute next velocity information
-        ///double dist_to_goal;
-        ///if(results.traj==NULL) dist_to_goal=10;
-        ///else dist_to_goal=sqrt(pow(results.traj->xs(0)-goal(0),2)+pow(results.traj->xs(1)-goal(1),2));
-
-        if(Task_state==0) results=dwa_control_dist(xstate,v,goal,moconfig, obhead);
+        if(Task_state==0) results=dwa_control_dist(xstate,v,goal,moconfig, obs);
         else if(Task_state==1) results=dwa_control_yaw(xstate,v,goal,moconfig);
         
         v<<results.u(0),results.u(1);
@@ -105,7 +95,7 @@ int main(int argc, char **argv)
         loop_rate.sleep();
     }
     
-    delete obhead;
+    ///delete obhead;
     return 0;
 }
 
